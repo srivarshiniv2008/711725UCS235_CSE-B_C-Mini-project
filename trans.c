@@ -10,6 +10,10 @@ struct clientData
     char lastName[15];    // account last name
     char firstName[10];   // account first name
     double balance;       // account balance
+    int status;            // account status
+    int dob[15];               // date of birth
+    char address[50];     // account address
+    char phone[15];       // account phone number
 };                        // end structure clientData
 
 // prototypes
@@ -165,6 +169,7 @@ void deleteRecord(FILE *fPtr)
         fwrite(&blankClient, sizeof(struct clientData), 1, fPtr);
     } // end else
 } // end function deleteRecord
+scanf("%9s%14s%14s%11s%29s%29s%11d%10.2f", client.firstName, client.lastName, client.address, client.phone, &client.dob, &client.status, &client.acctNum, &client.balance);
 
 // create and insert record
 void newRecord(FILE *fPtr)
@@ -211,7 +216,11 @@ unsigned int enterChoice(void)
                  "2 - update an account\n"
                  "3 - add a new account\n"
                  "4 - delete an account\n"
-                 "5 - end program\n? ");
+                 "5 - status of accounts\n"
+                 "6 - date of birth of accounts\n"
+                 "7 - address of accounts\n"
+                 "8 - phone number of accounts\n"
+                 "9 - end program\n? ");
 
     scanf("%u", &menuChoice); // receive choice from user
     return menuChoice;
