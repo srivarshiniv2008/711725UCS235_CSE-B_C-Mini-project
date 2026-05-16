@@ -1,0 +1,3 @@
+Acct  Last Name       First Name DOB         Address        Phone          Status       Balance
+1     John            Joe                                                  147563       1222.00
+20    varshini        sri        100         199999         200            100         10000.00

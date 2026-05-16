@@ -1,8 +1,10 @@
 // Bank-account program reads a random-access file sequentially,
 // updates data already written to the file, creates new data to
 // be placed in the file, and deletes data previously in the file.
+
 #include <stdio.h>
 #include <stdlib.h>
+
 // clientData structure definition
 struct clientData
 {
@@ -10,11 +12,13 @@ struct clientData
     char lastName[15];    // account last name
     char firstName[10];   // account first name
     double balance;       // account balance
-    int status;            // account status
-    int dob[15];               // date of birth
-    char address[50];     // account address
-    char phone[15];       // account phone number
-};                        // end structure clientData
+
+    int status;           
+    char dob[15];         
+    char address[50];     
+    char phone[15];       
+
+}; // end structure clientData
 
 // prototypes
 unsigned int enterChoice(void);
@@ -22,11 +26,12 @@ void textFile(FILE *readPtr);
 void updateRecord(FILE *fPtr);
 void newRecord(FILE *fPtr);
 void deleteRecord(FILE *fPtr);
+void accountDetails(FILE *fPtr);
 
 int main(int argc, char *argv[])
 {
-    FILE *cfPtr;         // credit.dat file pointer
-    unsigned int choice; // user's choice
+    FILE *cfPtr;         
+    unsigned int choice; 
 
     // fopen opens the file; exits if file cannot be opened
     if ((cfPtr = fopen("credit.dat", "rb+")) == NULL)
@@ -36,7 +41,7 @@ int main(int argc, char *argv[])
     }
 
     // enable user to specify action
-    while ((choice = enterChoice()) != 5)
+    while ((choice = enterChoice()) != 9)
     {
         switch (choice)
         {
@@ -44,184 +49,258 @@ int main(int argc, char *argv[])
         case 1:
             textFile(cfPtr);
             break;
+
         // update record
         case 2:
             updateRecord(cfPtr);
             break;
+
         // create record
         case 3:
             newRecord(cfPtr);
             break;
+
         // delete existing record
         case 4:
             deleteRecord(cfPtr);
             break;
-        // display if user does not select valid choice
+
+        // display account details
+        case 5:
+            accountDetails(cfPtr);
+            break;
+
         default:
             puts("Incorrect choice");
             break;
+
         } // end switch
     }     // end while
 
     fclose(cfPtr); // fclose closes the file
 } // end main
 
+
 // create formatted text file for printing
 void textFile(FILE *readPtr)
 {
-    FILE *writePtr; // accounts.txt file pointer
-    int result;     // used to test whether fread read any bytes
-    // create clientData with default information
-    struct clientData client = {0, "", "", 0.0};
+    FILE *writePtr; 
+    int result;     
 
-    // fopen opens the file; exits if file cannot be opened
+    struct clientData client = {0, "", "", 0.0, 0, "", "", ""};
+
     if ((writePtr = fopen("accounts.txt", "w")) == NULL)
     {
         puts("File could not be opened.");
-    } // end if
+    }
     else
     {
-        rewind(readPtr); // sets pointer to beginning of file
-        fprintf(writePtr, "%-6s%-16s%-11s%10s\n", "Acct", "Last Name", "First Name", "Balance");
+        rewind(readPtr);
 
-        // copy all records from random-access file into text file
+        fprintf(writePtr,
+                "%-6s%-16s%-11s%-12s%-15s%-15s%-10s%10s\n",
+                "Acct",
+                "Last Name",
+                "First Name",
+                "DOB",
+                "Address",
+                "Phone",
+                "Status",
+                "Balance");
+
         while (!feof(readPtr))
         {
             result = fread(&client, sizeof(struct clientData), 1, readPtr);
 
-            // write single record to text file
             if (result != 0 && client.acctNum != 0)
             {
-                fprintf(writePtr, "%-6d%-16s%-11s%10.2f\n", client.acctNum, client.lastName, client.firstName,
+                fprintf(writePtr,
+                        "%-6d%-16s%-11s%-12s%-15s%-15s%-10d%10.2f\n",
+                        client.acctNum,
+                        client.lastName,
+                        client.firstName,
+                        client.dob,
+                        client.address,
+                        client.phone,
+                        client.status,
                         client.balance);
-            } // end if
-        }     // end while
+            }
+        }
 
-        fclose(writePtr); // fclose closes the file
-    }                     // end else
-} // end function textFile
+        fclose(writePtr);
+    }
+}
+
 
 // update balance in record
 void updateRecord(FILE *fPtr)
 {
-    unsigned int account; // account number
-    double transaction;   // transaction amount
-    // create clientData with no information
-    struct clientData client = {0, "", "", 0.0};
+    unsigned int account; 
+    double transaction;   
 
-    // obtain number of account to update
+    struct clientData client = {0, "", "", 0.0, 0, "", "", ""};
+
     printf("%s", "Enter account to update ( 1 - 100 ): ");
     scanf("%d", &account);
 
-    // move file pointer to correct record in file
     fseek(fPtr, (account - 1) * sizeof(struct clientData), SEEK_SET);
-    // read record from file
+
     fread(&client, sizeof(struct clientData), 1, fPtr);
-    // display error if account does not exist
+
     if (client.acctNum == 0)
     {
         printf("Account #%d has no information.\n", account);
     }
     else
-    { // update record
-        printf("%-6d%-16s%-11s%10.2f\n\n", client.acctNum, client.lastName, client.firstName, client.balance);
+    {
+        printf("%-6d%-16s%-11s%10.2f\n\n",
+               client.acctNum,
+               client.lastName,
+               client.firstName,
+               client.balance);
 
-        // request transaction amount from user
         printf("%s", "Enter charge ( + ) or payment ( - ): ");
         scanf("%lf", &transaction);
-        client.balance += transaction; // update record balance
 
-        printf("%-6d%-16s%-11s%10.2f\n", client.acctNum, client.lastName, client.firstName, client.balance);
+        client.balance += transaction;
 
-        // move file pointer to correct record in file
-        // move back by 1 record length
+        printf("%-6d%-16s%-11s%10.2f\n",
+               client.acctNum,
+               client.lastName,
+               client.firstName,
+               client.balance);
+
         fseek(fPtr, -sizeof(struct clientData), SEEK_CUR);
-        // write updated record over old record in file
+
         fwrite(&client, sizeof(struct clientData), 1, fPtr);
-    } // end else
-} // end function updateRecord
+    }
+}
+
 
 // delete an existing record
 void deleteRecord(FILE *fPtr)
 {
-    struct clientData client;                       // stores record read from file
-    struct clientData blankClient = {0, "", "", 0}; // blank client
-    unsigned int accountNum;                        // account number
+    struct clientData client;
+    struct clientData blankClient = {0, "", "", 0.0, 0, "", "", ""};
 
-    // obtain number of account to delete
+    unsigned int accountNum;
+
     printf("%s", "Enter account number to delete ( 1 - 100 ): ");
     scanf("%d", &accountNum);
 
-    // move file pointer to correct record in file
     fseek(fPtr, (accountNum - 1) * sizeof(struct clientData), SEEK_SET);
-    // read record from file
+
     fread(&client, sizeof(struct clientData), 1, fPtr);
-    // display error if record does not exist
+
     if (client.acctNum == 0)
     {
         printf("Account %d does not exist.\n", accountNum);
-    } // end if
+    }
     else
-    { // delete record
-        // move file pointer to correct record in file
+    {
         fseek(fPtr, (accountNum - 1) * sizeof(struct clientData), SEEK_SET);
-        // replace existing record with blank record
+
         fwrite(&blankClient, sizeof(struct clientData), 1, fPtr);
-    } // end else
-} // end function deleteRecord
-scanf("%9s%14s%14s%11s%29s%29s%11d%10.2f", client.firstName, client.lastName, client.address, client.phone, &client.dob, &client.status, &client.acctNum, &client.balance);
+
+        printf("Account deleted successfully.\n");
+    }
+}
+
 
 // create and insert record
 void newRecord(FILE *fPtr)
 {
-    // create clientData with default information
-    struct clientData client = {0, "", "", 0.0};
-    unsigned int accountNum; // account number
+    struct clientData client = {0, "", "", 0.0, 0, "", "", ""};
 
-    // obtain number of account to create
+    unsigned int accountNum;
+
     printf("%s", "Enter new account number ( 1 - 100 ): ");
     scanf("%d", &accountNum);
 
-    // move file pointer to correct record in file
     fseek(fPtr, (accountNum - 1) * sizeof(struct clientData), SEEK_SET);
-    // read record from file
+
     fread(&client, sizeof(struct clientData), 1, fPtr);
-    // display error if account already exists
+
     if (client.acctNum != 0)
     {
-        printf("Account #%d already contains information.\n", client.acctNum);
-    } // end if
+        printf("Account #%d already contains information.\n",
+               client.acctNum);
+    }
     else
-    { // create record
-        // user enters last name, first name and balance
-        printf("%s", "Enter lastname, firstname, balance\n? ");
-        scanf("%14s%9s%lf", client.lastName, client.firstName, &client.balance);
+    {
+        printf("Enter lastname firstname balance status dob address phone\n");
+
+        scanf("%14s %9s %lf %d %14s %49s %14s",
+              client.lastName,
+              client.firstName,
+              &client.balance,
+              &client.status,
+              client.dob,
+              client.address,
+              client.phone);
 
         client.acctNum = accountNum;
-        // move file pointer to correct record in file
-        fseek(fPtr, (client.acctNum - 1) * sizeof(struct clientData), SEEK_SET);
-        // insert record in file
+
+        fseek(fPtr,
+              (client.acctNum - 1) * sizeof(struct clientData),
+              SEEK_SET);
+
         fwrite(&client, sizeof(struct clientData), 1, fPtr);
-    } // end else
-} // end function newRecord
+
+        printf("Account added successfully.\n");
+    }
+}
+
+
+// display full account details
+void accountDetails(FILE *fPtr)
+{
+    unsigned int account;
+
+    struct clientData client = {0, "", "", 0.0, 0, "", "", ""};
+
+    printf("Enter account number (1 - 100): ");
+    scanf("%u", &account);
+
+    fseek(fPtr,
+          (account - 1) * sizeof(struct clientData),
+          SEEK_SET);
+
+    fread(&client, sizeof(struct clientData), 1, fPtr);
+
+    if (client.acctNum == 0)
+    {
+        printf("No record found.\n");
+    }
+    else
+    {
+        printf("\nAccount Number : %u\n", client.acctNum);
+        printf("First Name     : %s\n", client.firstName);
+        printf("Last Name      : %s\n", client.lastName);
+        printf("Balance        : %.2lf\n", client.balance);
+        printf("Status         : %d\n", client.status);
+        printf("DOB            : %s\n", client.dob);
+        printf("Address        : %s\n", client.address);
+        printf("Phone Number   : %s\n", client.phone);
+    }
+}
+
 
 // enable user to input menu choice
 unsigned int enterChoice(void)
 {
-    unsigned int menuChoice; // variable to store user's choice
-    // display available options
-    printf("%s", "\nEnter your choice\n"
-                 "1 - store a formatted text file of accounts called\n"
-                 "    \"accounts.txt\" for printing\n"
-                 "2 - update an account\n"
-                 "3 - add a new account\n"
-                 "4 - delete an account\n"
-                 "5 - status of accounts\n"
-                 "6 - date of birth of accounts\n"
-                 "7 - address of accounts\n"
-                 "8 - phone number of accounts\n"
-                 "9 - end program\n? ");
+    unsigned int menuChoice;
 
-    scanf("%u", &menuChoice); // receive choice from user
+    printf("%s",
+           "\nEnter your choice\n"
+           "1 - store formatted text file\n"
+           "2 - update an account\n"
+           "3 - add a new account\n"
+           "4 - delete an account\n"
+           "5 - display account details\n"
+           "9 - end program\n? ");
+
+    scanf("%u", &menuChoice);
+
     return menuChoice;
-} // end function enterChoice
+}
